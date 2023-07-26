@@ -17,7 +17,7 @@ describe('CompanyCrawlerService', () => {
           password: process.env.MYSQL_PASSWORD,
           autoLoadEntities: true,
           logging: process.env.ENV === 'prod' ? ['error'] : true,
-          maxQueryExecutionTime: 1000
+          maxQueryExecutionTime: 10000
         }),
         MilitaryModule
       ],
@@ -31,15 +31,21 @@ describe('CompanyCrawlerService', () => {
     jest.setTimeout(1000 * 60 * 60);
 
     it('수집 - 산업기능요원', async () => {
+      console.log('----산업기능요원 수집 시작----');
       await crawlerService.crawl('산업기능요원');
+      console.log('----산업기능요원 수집 완료----');
     });
 
     it('수집 - 전문연구요원', async () => {
+      console.log('----전문연구요원 수집 시작----');
       await crawlerService.crawl('전문연구요원');
+      console.log('----전문연구요원 수집 완료----');
     });
 
     it('수집 - 승선근무예비역', async () => {
+      console.log('----승선근무예비역 수집 시작----');
       await crawlerService.crawl('승선근무예비역');
+      console.log('----승선근무예비역 수집 완료----');
     });
   });
 });

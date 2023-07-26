@@ -38,55 +38,60 @@ export class CompanyCrawlerService {
 
     const companys = [];
     for (const code of codes) {
-      const result = await axios.post(
-        this.url,
-        {
-          al_eopjong_gbcd: code,
-          eopjong_gbcd_list: code,
-          eopjong_gbcd: yowonCode,
-          eopjong_cd: code,
-          pageUnit: 10000,
-          pageIndex: 1
-        },
-        {
-          headers: {
-            connection: 'keep-alive',
-            'content-type': 'application/x-www-form-urlencoded'
+      // 하나의 업종에 3000개 이상의 회사가 없다는 가정
+      for (let pageIdx = 1; pageIdx < 6; pageIdx++) {
+        const result = await axios.post(
+          this.url,
+          {
+            al_eopjong_gbcd: code,
+            eopjong_gbcd_list: code,
+            eopjong_gbcd: yowonCode,
+            eopjong_cd: code,
+            pageUnit: 500,
+            pageIndex: pageIdx
           },
-          withCredentials: true,
-          timeout: 10 * 1000
+          {
+            headers: {
+              connection: 'keep-alive',
+              'content-type': 'application/x-www-form-urlencoded'
+            },
+            withCredentials: true,
+            timeout: 10 * 1000
+          }
+        );
+
+        const $ = cheerio.load(result.data);
+        const trs = $(`.brd_list_n > tbody:nth-child(4)`).find('tr').length;
+
+        for (let i = 1; i < trs; i++) {
+          const name = $(
+            `.brd_list_n > tbody:nth-child(4) > tr:nth-child(${i}) > th:nth-child(1) > a:nth-child(1)`
+          ).text();
+          const seonjeongYear = $(
+            `.brd_list_n > tbody:nth-child(4) > tr:nth-child(${i}) > td:nth-child(2)`
+          ).text();
+          const geunmuji = $(
+            `.brd_list_n > tbody:nth-child(4) > tr:nth-child(${i}) > td:nth-child(3)`
+          ).text();
+          const chaeyong = $(
+            `.brd_list_n > tbody:nth-child(4) > tr:nth-child(${i}) > td:nth-child(4)`
+          ).text();
+
+          companys.push({
+            name: name,
+            code: code,
+            geunmuji: geunmuji,
+            yowon: yowon,
+            seonjeongYear: seonjeongYear,
+            chaeyong: chaeyong
+          });
         }
-      );
-
-      const $ = cheerio.load(result.data);
-      const trs = $(`.brd_list_n > tbody:nth-child(4)`).find('tr').length;
-
-      for (let i = 1; i < trs; i++) {
-        const name = $(
-          `.brd_list_n > tbody:nth-child(4) > tr:nth-child(${i}) > th:nth-child(1) > a:nth-child(1)`
-        ).text();
-        const seonjeongYear = $(
-          `.brd_list_n > tbody:nth-child(4) > tr:nth-child(${i}) > td:nth-child(2)`
-        ).text();
-        const geunmuji = $(
-          `.brd_list_n > tbody:nth-child(4) > tr:nth-child(${i}) > td:nth-child(3)`
-        ).text();
-        const chaeyong = $(
-          `.brd_list_n > tbody:nth-child(4) > tr:nth-child(${i}) > td:nth-child(4)`
-        ).text();
-
-        companys.push({
-          name: name,
-          code: code,
-          geunmuji: geunmuji,
-          yowon: yowon,
-          seonjeongYear: seonjeongYear,
-          chaeyong: chaeyong
-        });
       }
+
+      console.log(code, companys.length);
     }
 
-    await this.companyRepository.delete({ yowon: '산업기능요원' });
+    await this.companyRepository.delete({ yowon });
     await this.companyRepository.insert(companys);
   }
 }
