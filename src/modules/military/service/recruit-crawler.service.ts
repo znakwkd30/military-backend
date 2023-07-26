@@ -26,7 +26,6 @@ export class RecruitCrawlerService {
     const $ = cheerio.load(result.data);
     const trs = $(`#content > table > tbody`).find('tr').length;
 
-    console.log(result.data);
     const recruitments = [];
     for (let i = 1; i < trs; i++) {
       const cygg = $(
